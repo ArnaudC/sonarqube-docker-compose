@@ -1,0 +1,21 @@
+stages:
+  - sonarqube
+
+sonarqube:
+    stage: sonarqube-check
+    image:
+        name: sonarsource/sonar-scanner-cli:4.7
+    variables:
+        SONAR_LOGIN: $SONAR_LOGIN
+        SONAR_PASSWORD: $SONAR_PASSWORD
+    script:
+        - sonar-scanner -Dsonar.qualitygate.wait=true -Dsonar.sources="./react" -Dsonar.host.url="https://sonarqube.icm-institute.org" -Dsonar.projectKey=xnat -Dsonar.projectName="Xnat" -Dsonar.login=$SONAR_LOGIN -Dsonar.password=$SONAR_PASSWORD
+    allow_failure: true
+    cache:
+        key: ${CI_JOB_NAME}
+        paths:
+            - .sonar/cache
+    tags:
+        - icm-gitlab-runner-docker
+    only:
+        - develop

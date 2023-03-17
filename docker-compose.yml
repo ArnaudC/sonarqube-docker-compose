@@ -1,0 +1,43 @@
+version: '3.7'
+
+services:
+  # Sonarqube server : continuous code quality + security
+  # User = USER_BDD, password = PASSWORD_BDD (in .env file)
+  # The first time, we need to adjust docker parameters for sonarqube. Execute commands in the section 'Docker Host Requirements' from https://hub.docker.com/_/sonarqube/ : sudo sysctl -w vm.max_map_count=262144; sudo sysctl -w fs.file-max=65536; ulimit -n 65536; ulimit -u 4096; docker-compose -f docker-compose.yml up
+  sonarqube:
+    image: sonarqube:${SONAR_VERSION}
+    depends_on:
+      - sonarqube-db
+    ports:
+      - "${SONARQUBE_PORT}:9000"
+    expose:
+      - "9000"
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonar
+      SONAR_JDBC_USERNAME: ${USER_BDD}
+      SONAR_JDBC_PASSWORD: ${PASSWORD_BDD}
+    volumes:
+      - /var/data/sonarqube_data:/opt/sonarqube/data
+      - /var/data/sonarqube_extensions:/opt/sonarqube/extensions
+      - /var/data/sonarqube_logs:/opt/sonarqube/logs
+      - /var/data/sonarqube_temp:/opt/sonarqube/temp
+    ulimits:
+      nproc: 4096
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  # Sonarqube database
+  sonarqube-db:
+    image: postgres:${DB_VERSION}
+    ports:
+      - "50002:5432"
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_USER: ${USER_BDD}
+      POSTGRES_PASSWORD: ${PASSWORD_BDD}
+    volumes:
+      - /var/data/postgresql:/var/lib/postgresql
+      # This needs explicit mapping due to https://github.com/docker-library/postgres/blob/4e48e3228a30763913ece952c611e5e9b95c8759/Dockerfile.template#L52
+      - /var/data/postgresql_data:/var/lib/postgresql/data
